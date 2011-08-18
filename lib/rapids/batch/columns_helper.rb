@@ -23,26 +23,40 @@ module Rapids
         end
       end
       
-      def generate_columns_hash(model,find_or_creates)
+      def generate_columns_hash(model,criteria_hash,skip_columns = [])
         hash = {}
+        skip_columns_next_time = {}
         
-        batch_association_primary_keys = if find_or_creates.is_a?(Hash)
-          find_or_creates.map{|name,ignore|model.reflections[name].primary_key_name}
+        batch_association_primary_keys = if criteria_hash.is_a?(Hash)
+          criteria_hash.map do |name,ignore|
+            if model.reflections[name].collection?
+              skip_columns_next_time[name] = [model.reflections[name].primary_key_name]
+              nil
+            else
+              model.reflections[name].primary_key_name
+            end
+          end.compact
         else
           []
         end
-
-        columns(model).reject{|c|batch_association_primary_keys.include?(c.name)}.each do |column|
+        
+        columns(model).reject{|c|batch_association_primary_keys.include?(c.name) || skip_columns.include?(c.name)}.each do |column|
           hash[column.name.to_sym] = column
         end
         
-        if find_or_creates.is_a?(Hash)
-          find_or_creates.each do |name,criteria|
-            hash[name] = generate_columns_hash(model.reflections[name].klass,criteria)
+        if criteria_hash.is_a?(Hash)
+          criteria_hash.each do |name,criteria_array|
+            if model.reflections[name]
+              if criteria_array.is_a?(Array)
+                hash[name] = criteria_array.inject({}) do |memo,criteria|
+                  memo.merge(generate_columns_hash(model.reflections[name].klass,criteria,skip_columns_next_time[name] || []))
+                end
+              end
+            end
           end
         end
-
-        hash
+        
+        hash        
       end
     end
   end

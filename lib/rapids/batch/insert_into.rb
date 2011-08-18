@@ -18,7 +18,16 @@ module Rapids
         values_sql = @values.map do |row|
           row_sql = columns_helper.map do |column,path|
             specific_object = path.inject(row){|memo,association|memo.send(association)}
-            default_on_nil(specific_object.attributes[column.name],column)
+            if specific_object.respond_to?(:each)
+              many_attributes = specific_object.map{|s|s.attributes[column.name]}.compact
+              if many_attributes.empty?
+                default_on_nil(nil,column)
+              else
+                default_on_nil(many_attributes.sort.join(","),column)
+              end
+            else
+              default_on_nil(specific_object.attributes[column.name],column)
+            end
           end
           "(#{row_sql.join(",")})"
         end.join(",")
