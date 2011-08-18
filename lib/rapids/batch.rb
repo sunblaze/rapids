@@ -48,8 +48,6 @@ module Rapids
     def create_batch_trigger
       create_trigger = CreateTrigger.new(self,@batch)
       
-      puts create_trigger.to_sql
-      
       connection.execute(create_trigger.to_sql)
     end
     

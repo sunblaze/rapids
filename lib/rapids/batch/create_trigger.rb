@@ -69,9 +69,13 @@ module Rapids
             sub_comparisons = column_or_association_name_or_hash.map do |association_name,sub_criteria|
               association = model.reflections[association_name]
               if association.collection?
-                "EXISTS (select *
-                           from #{association.quoted_table_name}
-                           where `#{model.table_name}`.id = #{association.primary_key_name} and #{sub_criteria.map{|column_name|c = lookup_column_by_name(association.klass,column_name); "find_in_set(#{sql_column_name(c,[])},new.#{sql_column_name(c,path+[association_name])}) > 0"}.join(" and ")})"
+                sub_criteria.map do |column_name|
+                  column = lookup_column_by_name(association.klass,column_name)
+                  "new.#{sql_column_name(column,path+[association_name])} = (select GROUP_CONCAT(#{sql_column_name(column,[])} ORDER BY #{sql_column_name(column,[])})
+                        from #{association.quoted_table_name}
+                        where `#{model.table_name}`.id = `#{association.primary_key_name}`)
+                  "
+                end.join(" and ")
               else
                 "true"
               end
