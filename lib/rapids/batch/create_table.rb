@@ -17,8 +17,10 @@ module Rapids
           association = nil
           model = @model
           path.each do |association_name|
-            association = model.reflections[association_name]
-            model = model.reflections[association_name].klass
+            if model.reflections[association_name]
+              association = model.reflections[association_name]
+              model = model.reflections[association_name].klass
+            end
           end
           column_type = if association && association.collection? && column.number?
             "varchar(255)"

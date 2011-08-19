@@ -1,6 +1,7 @@
 require 'rapids/batch/create_table'
 require 'rapids/batch/insert_into'
 require 'rapids/batch/create_trigger'
+require 'rapids/batch/find_or_create'
 
 module Rapids
   module Batch
@@ -8,11 +9,11 @@ module Rapids
       attr_reader :find_or_creates
       
       def initialize
-        @find_or_creates = {}
+        @find_or_creates = []
       end
       
-      def find_or_create(name,find_columns)
-        @find_or_creates[name] = find_columns
+      def find_or_create(name,find_columns,*fill_columns_plus_other_params)
+        @find_or_creates << FindOrCreate.new(name,find_columns,fill_columns_plus_other_params.first)
       end
     end
     

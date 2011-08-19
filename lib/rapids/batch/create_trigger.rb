@@ -12,15 +12,15 @@ module Rapids
       end
 
       def to_sql
-        declares = @batch.find_or_creates.map do |name,ignore|
-          "declare #{variable_name(name,[])} integer;"
+        declares = @batch.find_or_creates.map do |find_or_create|
+          "declare #{variable_name(find_or_create.name,[])} integer;"
         end.join("\n")
 
         columns_helper = ColumnsHelper.new(@model,@batch.find_or_creates)
         main_columns = columns_helper.find_all{|column,path| path == []}
 
-        insert_header = (main_columns.map(&:first) + criteria_columns(@model,@batch.find_or_creates.keys)).map{|a|sql_column_name(a,[])}
-        insert_values = main_columns.map{|a|"new.#{sql_column_name(a.first,[])}"} + @batch.find_or_creates.keys.map{|name|variable_name(name,[])}
+        insert_header = (main_columns.map(&:first) + criteria_columns(@model,association_find_or_creates.map(&:name))).map{|a|sql_column_name(a,[])}
+        insert_values = main_columns.map{|a|"new.#{sql_column_name(a.first,[])}"} + association_find_or_creates.map(&:name).map{|name|variable_name(name,[])}
 
         <<-TRIGGER_SQL
           create trigger `#{batch_table_name}_trigger` after insert on `#{batch_table_name}` for each row
@@ -36,26 +36,48 @@ module Rapids
       end
       
       private
+      def association_find_or_creates(model = @model,find_or_creates = @batch.find_or_creates)
+        find_or_creates.reject{|foc|model.reflections[foc.name].nil?}
+      end
+      
       def find_or_create_sql(model,find_or_creates, recursion_path = [])
         columns_helper = ColumnsHelper.new(model,find_or_creates)
         
-        find_or_creates.map do |name,criteria|
-          sub_model = model.reflections[name].klass
-          association_table_name = sub_model.table_name
-          sub_model_columns = columns_helper.find_all{|column,path| path == [name]}
+        find_or_creates.map do |find_or_create|
+          name,criteria = find_or_create.name,find_or_create.find_columns
+          if model.reflections[name]
+            sub_model = model.reflections[name].klass
+            association_table_name = sub_model.table_name
+            sub_model_columns = columns_helper.find_all{|column,path| path == [name]}
           
-          where_sql = foc_where_sql(sub_model,criteria,[name])
+            where_sql = foc_where_sql(sub_model,criteria,[name])
 
-          "select id from `#{association_table_name}` where #{where_sql} into #{variable_name(name,recursion_path)};
-           if #{variable_name(name,recursion_path)} is null then
-             insert into #{association_table_name} (#{sub_model_columns.map{|a|sql_column_name(a.first,[])}.join(",")})
-                                            values (#{sub_model_columns.map{|a|"new.#{sql_column_name(a.first,a.last)}"}.join(",")});
+            "select id from `#{association_table_name}` where #{where_sql} into #{variable_name(name,recursion_path)};
+             if #{variable_name(name,recursion_path)} is null then
+               insert into #{association_table_name} (#{sub_model_columns.map{|a|sql_column_name(a.first,[])}.join(",")})
+                                              values (#{sub_model_columns.map{|a|"new.#{sql_column_name(a.first,a.last)}"}.join(",")});
              
-             select last_insert_id() into #{variable_name(name,recursion_path)};
+               select last_insert_id() into #{variable_name(name,recursion_path)};
              
-             #{sub_inserts(sub_model,criteria,[name],variable_name(name,recursion_path))}
-           end if;
-          "
+               #{sub_inserts(sub_model,criteria,[name],variable_name(name,recursion_path))}
+             end if;
+            "
+          elsif name.is_a?(String) && Kernel.const_get(name)
+            sub_model = Kernel.const_get(name)
+            association_table_name = sub_model.table_name
+            sub_model_columns = columns_helper.find_all{|column,path| path == [name]}
+          
+            where_sql = foc_where_sql(sub_model,criteria,[name])
+            
+            "select id from `#{association_table_name}` where #{where_sql} into #{variable_name(name,recursion_path)};
+             if #{variable_name(name,recursion_path)} is null then
+               insert into #{association_table_name} (#{sub_model_columns.map{|a|sql_column_name(a.first,[])}.join(",")})
+                                              values (#{sub_model_columns.map{|a|"new.#{sql_column_name(a.first,a.last)}"}.join(",")});
+             
+               #{sub_inserts(sub_model,criteria,[name],variable_name(name,recursion_path))}
+             end if;
+            "
+          end
         end.join("\n")
       end
       
@@ -128,7 +150,7 @@ module Rapids
           # doesn't match a column name look for an assocation instead then
           association = model.reflections[column_name]
 
-          column = if association.collection?
+          column = if association.nil? || association.collection?
             nil #TODO implement
           else
             model.columns.detect{|c|c.name == association.primary_key_name}
