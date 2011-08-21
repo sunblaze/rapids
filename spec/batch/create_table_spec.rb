@@ -25,6 +25,14 @@ module Rapids::Batch
       create_table.to_sql.should == "CREATE TABLE `$posts_batch` (`foc$Category$category` varchar(255),`author_id` int(11),`category` varchar(255),`name` varchar(255)) ENGINE=BLACKHOLE DEFAULT CHARSET=utf8"
     end
     
+    it "should generate sql for a manual definition, with explicit source column" do
+      batch = Rapids::Batch::DefineBatch.new
+      batch.find_or_create("AltCategory",[[:name,:category]])
+      
+      create_table = CreateTable.new(Post,batch)
+      create_table.to_sql.should == "CREATE TABLE `$posts_batch` (`foc$AltCategory$name` varchar(255),`author_id` int(11),`category` varchar(255),`name` varchar(255)) ENGINE=BLACKHOLE DEFAULT CHARSET=utf8"
+    end
+    
     it "should generate sql for a more complicated find or create with reliances on a has_many relationship" do
       batch = Rapids::Batch::DefineBatch.new
       batch.find_or_create(:post,[:name,{:post_tags => [:tag_id]}])

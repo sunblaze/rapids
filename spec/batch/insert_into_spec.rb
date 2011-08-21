@@ -29,5 +29,14 @@ module Rapids::Batch
       insert_into = InsertInto.new(Post,batch,collection)
       clean_sql(insert_into.to_sql).should == "INSERT INTO `$posts_batch` (`foc$Category$category`,`author_id`,`category`,`name`) VALUES ('food',NULL,'food','Dining at 323 Butter St')"
     end
+    
+    it "should generate sql for a manual definition, with explicit source column" do
+      batch = Rapids::Batch::DefineBatch.new
+      batch.find_or_create("AltCategory",[[:name,:category]])
+      collection = [Post.new(:name => "Dining at 323 Butter St",:category => "food")]
+      
+      insert_into = InsertInto.new(Post,batch,collection)
+      clean_sql(insert_into.to_sql).should == "INSERT INTO `$posts_batch` (`foc$AltCategory$name`,`author_id`,`category`,`name`) VALUES ('food',NULL,'food','Dining at 323 Butter St')"
+    end
   end
 end

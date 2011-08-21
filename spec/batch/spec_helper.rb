@@ -28,6 +28,9 @@ class ColumnHelperMigrations < ActiveRecord::Migration
     create_table :categories do |t|
       t.column :category, :string, :null => false
     end
+    create_table :alt_categories do |t|
+      t.column :name, :string, :null => false
+    end
     create_table :tags do |t|
       t.column :name, :string, :null => false
     end
@@ -44,6 +47,7 @@ class ColumnHelperMigrations < ActiveRecord::Migration
   def self.down
     drop_table :posts
     drop_table :categories
+    drop_table :alt_categories
     drop_table :authors
     drop_table :tags
     drop_table :post_tags
@@ -58,6 +62,9 @@ class Post < ActiveRecord::Base
 end
 
 class Category < ActiveRecord::Base
+end
+
+class AltCategory < ActiveRecord::Base
 end
 
 class Author < ActiveRecord::Base

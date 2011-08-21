@@ -105,9 +105,15 @@ module Rapids
             
             "("+sub_comparisons.join(" and ")+")"
           else
-            column = lookup_column_by_name(model,column_or_association_name_or_hash)
+            if column_or_association_name_or_hash.is_a?(Array)
+              destination_column = lookup_column_by_name(model,column_or_association_name_or_hash.first)
+              source_column = lookup_column_by_name(model,column_or_association_name_or_hash.last)
+            else
+              destination_column = lookup_column_by_name(model,column_or_association_name_or_hash)
+              source_column = lookup_column_by_name(model,column_or_association_name_or_hash)
+            end
 
-            "#{sql_column_name(column,[])} <=> new.#{sql_column_name(column,path)}"
+            "#{sql_column_name(destination_column,[])} <=> new.#{sql_column_name(destination_column,path)}"
           end
         end
         
