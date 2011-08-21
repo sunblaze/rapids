@@ -81,6 +81,7 @@ RSpec.configure do |config|
     ColumnHelperMigrations.migrate(:up)
   end
   config.after(:suite) do
+    puts "\n\n" #To help make the output nicer with these migration outputs in the testing
     ColumnHelperMigrations.migrate(:down)
   end
 end

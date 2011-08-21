@@ -27,7 +27,7 @@ module Rapids::Batch
       collection = [Post.new(:name => "Dining at 323 Butter St",:category => "food")]
       
       insert_into = InsertInto.new(Post,batch,collection)
-      clean_sql(insert_into.to_sql).should == ""
+      clean_sql(insert_into.to_sql).should == "INSERT INTO `$posts_batch` (`foc$Category$category`,`author_id`,`category`,`name`) VALUES ('food',NULL,'food','Dining at 323 Butter St')"
     end
   end
 end

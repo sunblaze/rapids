@@ -14,7 +14,7 @@ module Rapids
       
       private
       def internal_each(columns_hash,hash_path,&block)
-        columns_hash.each do |key,column_or_hash|
+        columns_hash.sort{|a,b| a[0].to_s <=> b[0].to_s}.each do |key,column_or_hash|
           if column_or_hash.is_a?(Hash)
             internal_each(column_or_hash,hash_path + [key],&block)
           else

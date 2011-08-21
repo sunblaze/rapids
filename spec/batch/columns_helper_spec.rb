@@ -15,13 +15,13 @@ module Rapids::Batch
     end
     
     it "should initialize with the manual find or create format" do
-      find_or_creates = [FindOrCreate.new("Category",[:name],[])]
+      find_or_creates = [FindOrCreate.new("Category",[:category],[])]
       columns_helper = ColumnsHelper.new(Post,find_or_creates)
       
       columns_helper.any? do |pair|
         column,path = *pair
-        column.name == "name" && path == ["Category"]
-      end.should be_true, "expected to find a column named 'name' and the path to be [\"Category\"] in the following:\n#{columns_helper.to_a.inspect}"
+        column.name == "category" && path == ["Category"]
+      end.should be_true, "expected to find a column named 'category' and the path to be [\"Category\"] in the following:\n#{columns_helper.to_a.inspect}"
     end
     
     it "should initialize with the association find or create with a has_many find or create" do
