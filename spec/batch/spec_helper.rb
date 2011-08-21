@@ -26,7 +26,7 @@ class ColumnHelperMigrations < ActiveRecord::Migration
       t.column :name, :string, :null => false
     end
     create_table :categories do |t|
-      t.column :name, :string, :null => false
+      t.column :category, :string, :null => false
     end
     create_table :tags do |t|
       t.column :name, :string, :null => false

@@ -17,7 +17,13 @@ module Rapids
         insert_header_sql = columns_helper.map{|column,path|sql_column_name(column,path)}.join(",")
         values_sql = @values.map do |row|
           row_sql = columns_helper.map do |column,path|
-            specific_object = path.inject(row){|memo,association|memo.send(association)}
+            specific_object = path.inject(row) do |memo,association|
+              if memo.respond_to?(association)
+                memo.send(association)
+              elsif association.is_a?(String)
+                memo
+              end
+            end
             if specific_object.respond_to?(:each)
               many_attributes = specific_object.map{|s|s.attributes[column.name]}.compact
               if many_attributes.empty?
