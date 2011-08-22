@@ -30,7 +30,7 @@ module Rapids
           "#{sql_column_name(column,path)} #{column_type}"
         end.join(",")
 
-        "CREATE TABLE `#{batch_table_name}` (#{columns_sql}) ENGINE=BLACKHOLE DEFAULT CHARSET=utf8"
+        "CREATE TABLE `#{batch_table_name}` (#{columns_sql}) ENGINE=BLACKHOLE DEFAULT CHARSET=utf8 COLLATE=#{@model.connection.collation}"
       end
     end
   end
