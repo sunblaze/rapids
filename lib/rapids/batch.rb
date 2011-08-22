@@ -18,8 +18,6 @@ module Rapids
     end
     
     def batch_create(collection)
-      
-      #TODO add support for non-activerecord class
       drop_batch_table_if_exists
       
       create_batch_table
