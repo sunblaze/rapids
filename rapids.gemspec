@@ -11,7 +11,7 @@ Gem::Specification.new do |s|
   s.version     = Rapids::VERSION
   s.platform    = Gem::Platform::RUBY
   s.authors     = ['James Smith']
-  s.email       = ["TODO: Write your email address"]
+  s.email       = ["sunblaze@gmail.com"]
   s.homepage    = 'http://github.com/sunblaze/rapids'
   s.summary     = rapids_summary
   s.description = rapids_summary #TODO write a better long form description
