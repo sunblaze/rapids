@@ -30,14 +30,20 @@ module Rapids
             specific_object = path.inject(row) do |memo,association|
               if memo.respond_to?(association)
                 memo.send(association)
+              elsif memo.is_a?(Hash) && memo[association.to_s]
+                memo[association.to_s]
               elsif association.is_a?(String)
                 memo
               end
             end
 
-            if specific_object.respond_to?(:each)
+            if specific_object.is_a?(Array)
               many_attributes = specific_object.map do |s|
-                s.instance_variable_get(:@attributes)[source_column_name]
+                if s.is_a?(ActiveRecord::Base)
+                  s.instance_variable_get(:@attributes)[source_column_name]
+                else
+                  s[source_column_name]
+                end
               end.compact
               if many_attributes.empty?
                 default_on_nil(nil,destination_column)
@@ -45,7 +51,11 @@ module Rapids
                 default_on_nil(many_attributes.sort.join(","),destination_column)
               end
             else
-              val = specific_object.instance_variable_get(:@attributes)[source_column_name] #speeds things up a bit since it's not typed first before being quoted
+              val = if specific_object.is_a?(ActiveRecord::Base)
+                specific_object.instance_variable_get(:@attributes)[source_column_name] #speeds things up a bit since it's not typed first before being quoted
+              else
+                specific_object[source_column_name]
+              end
               default_on_nil(val,destination_column)
             end
           end
