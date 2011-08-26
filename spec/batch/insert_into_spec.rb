@@ -39,6 +39,16 @@ module Rapids::Batch
       clean_sql(insert_into.to_sql).should == "INSERT INTO `$posts_batch` (`foc$AltCategory$name`,`author_id`,`category`,`name`) VALUES ('food',NULL,'food','Dining at 323 Butter St')"
     end
     
+    it "should generate sql and ignore the replace option" do
+      batch = Rapids::Batch::DefineBatch.new
+      collection = %w{food politics}.map do |category_name|
+        Category.new(:category => category_name)
+      end
+      
+      insert_into = InsertInto.new(Category,batch,collection,:replace => true)
+      clean_sql(insert_into.to_sql).should == "INSERT INTO `$categories_batch` (`category`) VALUES ('food'),('politics')"
+    end
+    
     describe "Without model objects" do
       it "should generate sql for a simple batch definition" do
         batch = Rapids::Batch::DefineBatch.new

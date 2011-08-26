@@ -6,10 +6,11 @@ module Rapids
     class InsertInto
       include ModelExtensions
       
-      def initialize(model,batch_definition,values)
+      def initialize(model,batch_definition,values,options = {})
         @model = model
         @batch = batch_definition
         @values = values
+        @options = options
       end
       
       def to_sql

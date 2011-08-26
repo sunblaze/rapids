@@ -6,9 +6,10 @@ module Rapids
     class CreateTrigger
       include ModelExtensions
       
-      def initialize(model,batch_definition)
+      def initialize(model,batch_definition,options = {})
         @model = model
         @batch = batch_definition
+        @options = options
       end
 
       def to_sql
@@ -29,7 +30,7 @@ module Rapids
             
             #{find_or_create_sql(@model,@batch.find_or_creates)}
             
-            insert into `#{@model.table_name}` (#{insert_header.join(",")})
+            #{@options[:replace] ? "replace" : "insert"} into `#{@model.table_name}` (#{insert_header.join(",")})
                                         values (#{insert_values.join(",")});
           end
         TRIGGER_SQL

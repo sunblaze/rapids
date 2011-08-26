@@ -17,14 +17,14 @@ module Rapids
       end
     end
     
-    def batch_create(collection)
+    def batch_create(collection,options = {})
       drop_batch_table_if_exists
       
       create_batch_table
       
-      create_batch_trigger
+      create_batch_trigger(options)
       
-      batch_insert(collection)
+      batch_insert(collection,options)
     end
     
     def batch(&block)
@@ -44,14 +44,14 @@ module Rapids
       connection.execute(create_table.to_sql)
     end
     
-    def create_batch_trigger
-      create_trigger = CreateTrigger.new(self,@batch)
-      
+    def create_batch_trigger(options)
+      create_trigger = CreateTrigger.new(self,@batch,options)
+
       connection.execute(create_trigger.to_sql)
     end
     
-    def batch_insert(values)
-      insert_into = InsertInto.new(self,@batch,values)
+    def batch_insert(values,options)
+      insert_into = InsertInto.new(self,@batch,values,options)
 
       connection.execute(insert_into.to_sql)
     end

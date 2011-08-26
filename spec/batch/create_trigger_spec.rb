@@ -32,5 +32,12 @@ module Rapids::Batch
       create_trigger = CreateTrigger.new(Post,batch)
       clean_sql(create_trigger.to_sql).should == "create trigger `$posts_batch_trigger` after insert on `$posts_batch` for each row\nbegin\ndeclare find_or_create$AltCategory integer;\nselect id from `alt_categories` where `name` <=> new.`foc$AltCategory$name` into find_or_create$AltCategory;\nif find_or_create$AltCategory is null then\ninsert into alt_categories (`name`)\nvalues (new.`foc$AltCategory$name`);\nend if;\ninsert into `posts` (`author_id`,`category`,`name`)\nvalues (new.`author_id`,new.`category`,new.`name`);\nend"
     end
+    
+    it "should generate sql for a replace insert instead" do
+      batch = Rapids::Batch::DefineBatch.new
+      
+      create_trigger = CreateTrigger.new(Category,batch,:replace => true)
+      clean_sql(create_trigger.to_sql).should == "create trigger `$categories_batch_trigger` after insert on `$categories_batch` for each row\nbegin\nreplace into `categories` (`category`)\nvalues (new.`category`);\nend"
+    end
   end
 end
