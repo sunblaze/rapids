@@ -17,7 +17,7 @@ module Rapids
           "declare #{variable_name(find_or_create.name,[])} integer;"
         end.join("\n")
 
-        columns_helper = ColumnsHelper.new(@model,@batch.find_or_creates)
+        columns_helper = ColumnsHelper.new(@model,@batch)
         main_columns = columns_helper.find_all{|column,path| path == []}
 
         insert_header = (main_columns.map(&:first) + criteria_columns(@model,association_find_or_creates.map(&:name))).map{|a|sql_column_name(a,[])}
@@ -28,10 +28,11 @@ module Rapids
           begin
             #{declares}
             
-            #{find_or_create_sql(@model,@batch.find_or_creates)}
+            #{find_or_create_sql(@model,@batch)}
             
             #{@options[:replace] ? "replace" : "insert"} into `#{@model.table_name}` (#{insert_header.join(",")})
                                         values (#{insert_values.join(",")});
+            #{updates_sql(@model,@batch)}
           end
         TRIGGER_SQL
       end
@@ -41,10 +42,10 @@ module Rapids
         find_or_creates.reject{|foc|model.reflections[foc.name].nil?}
       end
       
-      def find_or_create_sql(model,find_or_creates, recursion_path = [])
-        columns_helper = ColumnsHelper.new(model,find_or_creates)
+      def find_or_create_sql(model,batch,recursion_path = [])
+        columns_helper = ColumnsHelper.new(model,batch)
         
-        find_or_creates.map do |find_or_create|
+        batch.find_or_creates.map do |find_or_create|
           name,criteria = find_or_create.name,find_or_create.find_columns
           if model.reflections[name]
             sub_model = model.reflections[name].klass
@@ -172,6 +173,22 @@ module Rapids
             lookup_column_by_name(model,column_or_association_name_or_hash)
           end
         end
+      end
+      
+      def updates_sql(model,batch)
+        columns_helper = ColumnsHelper.new(model,batch)
+        
+        batch.updates.map do |update|
+          association = model.reflections[update.name]
+          update_model = association.klass
+          
+          update_columns = columns_helper.find_all{|column,path| path == update.path}.map do |pair|
+            column,path = *pair
+            "`#{column.name}` = IFNULL(new.#{sql_column_name(*pair)},`#{column.name}`)" #TODO should later add support for setting null in this update
+          end
+
+          "update `#{update_model.table_name}` set #{update_columns.join(",")} where `#{update_model.table_name}`.id = new.`#{association.primary_key_name}`;"
+        end.join("\n")
       end
     end
   end

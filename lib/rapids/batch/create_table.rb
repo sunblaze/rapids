@@ -12,11 +12,16 @@ module Rapids
       end
       
       def to_sql
-        columns_helper = ColumnsHelper.new(@model,@batch.find_or_creates)
+        columns_helper = ColumnsHelper.new(@model,@batch)
         columns_sql = columns_helper.map do |column,path|
           association = nil
           model = @model
-          path.each do |association_name|
+          path.each do |association_name_or_hash|
+            association_name = if association_name_or_hash.is_a?(Hash)
+              association_name_or_hash[:name]
+            else
+              association_name_or_hash
+            end
             if model.reflections[association_name]
               association = model.reflections[association_name]
               model = model.reflections[association_name].klass

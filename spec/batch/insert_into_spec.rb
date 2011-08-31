@@ -49,6 +49,15 @@ module Rapids::Batch
       clean_sql(insert_into.to_sql).should == "INSERT INTO `$categories_batch` (`category`) VALUES ('food'),('politics')"
     end
     
+    it "should generate sql for an update definition" do
+      batch = Rapids::Batch::DefineBatch.new
+      batch.update(:author)
+      collection = [Post.new(:name => "Dining at 323 Butter St",:category => "food",:author_id => 1,:author => Author.new(:name => "Joe"))]
+      
+      insert_into = InsertInto.new(Post,batch,collection)
+      clean_sql(insert_into.to_sql).should == "INSERT INTO `$posts_batch` (`author_id`,`category`,`name`,`update$author$name`) VALUES (1,'food','Dining at 323 Butter St','Joe')"
+    end
+    
     describe "Without model objects" do
       it "should generate sql for a simple batch definition" do
         batch = Rapids::Batch::DefineBatch.new
@@ -94,6 +103,15 @@ module Rapids::Batch
 
         create_table = InsertInto.new(Comment,batch,collection)
         create_table.to_sql.should == "INSERT INTO `$comments_batch` (`body`,`foc$post$author_id`,`foc$post$category`,`foc$post$name`,`foc$post$post_tags$tag_id`,`title`) VALUES ('Im a troll',NULL,NULL,'I just did something cool','1,2','You suck')"
+      end
+      
+      it "should generate sql for an update definition" do
+        batch = Rapids::Batch::DefineBatch.new
+        batch.update(:author)
+        collection = [{"name" => "Dining at 323 Butter St","category" => "food","author_id" => 1,"author" => {"name" => "Joe"}}]
+
+        insert_into = InsertInto.new(Post,batch,collection)
+        clean_sql(insert_into.to_sql).should == "INSERT INTO `$posts_batch` (`author_id`,`category`,`name`,`update$author$name`) VALUES (1,'food','Dining at 323 Butter St','Joe')"
       end
     end
   end

@@ -39,5 +39,13 @@ module Rapids::Batch
       create_trigger = CreateTrigger.new(Category,batch,:replace => true)
       clean_sql(create_trigger.to_sql).should == "create trigger `$categories_batch_trigger` after insert on `$categories_batch` for each row\nbegin\nreplace into `categories` (`category`)\nvalues (new.`category`);\nend"
     end
+    
+    it "should generate sql for a basic definition" do
+      batch = Rapids::Batch::DefineBatch.new
+      batch.update(:author)
+      
+      create_trigger = CreateTrigger.new(Post,batch)
+      clean_sql(create_trigger.to_sql).should == "create trigger `$posts_batch_trigger` after insert on `$posts_batch` for each row\nbegin\ninsert into `posts` (`author_id`,`category`,`name`)\nvalues (new.`author_id`,new.`category`,new.`name`);\nupdate `authors` set `name` = IFNULL(new.`update$author$name`,`name`) where `authors`.id = new.`author_id`;\nend"
+    end
   end
 end

@@ -4,8 +4,9 @@ module Rapids
       include Enumerable
       include ModelExtensions
       
-      def initialize(model,find_or_creates)
-        @hash = generate_columns_hash(model,find_or_creates)
+      def initialize(model,batch)
+        @hash = update_columns_hash(model,batch.updates)
+        @hash.merge!(generate_columns_hash(model,batch.find_or_creates))
       end
       
       def each(&block)
@@ -75,6 +76,17 @@ module Rapids
         end
         
         hash        
+      end
+      
+      def update_columns_hash(model,updates)
+        updates.inject({}) do |hash,update|
+          if model.reflections[update.name]
+            hash[{:type => :update, :name => update.name}] = generate_columns_hash(model.reflections[update.name].klass,[])
+            hash
+          else
+            hash
+          end
+        end
       end
     end
   end

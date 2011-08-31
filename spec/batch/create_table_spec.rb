@@ -40,5 +40,13 @@ module Rapids::Batch
       create_table = CreateTable.new(Comment,batch)
       create_table.to_sql.should == "CREATE TABLE `$comments_batch` (`body` varchar(255),`foc$post$author_id` int(11),`foc$post$category` varchar(255),`foc$post$name` varchar(255),`foc$post$post_tags$tag_id` varchar(255),`title` varchar(255)) ENGINE=BLACKHOLE DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci"
     end
+    
+    it "should generate sql for a update definition" do
+      batch = Rapids::Batch::DefineBatch.new
+      batch.update(:author)
+      
+      create_table = CreateTable.new(Post,batch)
+      create_table.to_sql.should == "CREATE TABLE `$posts_batch` (`author_id` int(11),`category` varchar(255),`name` varchar(255),`update$author$name` varchar(255)) ENGINE=BLACKHOLE DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci"
+    end
   end
 end

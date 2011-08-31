@@ -10,8 +10,20 @@ module Rapids
       end
       
       def sql_column_name(column,hash_path)
-        prefix = hash_path.empty? ? "" : "foc$"
-        association_list = (hash_path + [column.name]).map(&:to_s).join("$")
+        prefix = if hash_path.empty?
+          ""
+        elsif path_type = hash_path.first and path_type.is_a?(Hash) and path_type[:type] == :update
+          "update$"
+        else
+          "foc$"
+        end
+        association_list = (hash_path + [column.name]).map do |path_type|
+          if path_type.is_a?(Hash)
+            path_type[:name]
+          else
+            path_type.to_s
+          end
+        end.join("$")
         "`#{prefix+association_list}`"
       end
       

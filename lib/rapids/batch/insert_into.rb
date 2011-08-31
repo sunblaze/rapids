@@ -14,7 +14,7 @@ module Rapids
       end
       
       def to_sql
-        columns_helper = ColumnsHelper.new(@model,@batch.find_or_creates)
+        columns_helper = ColumnsHelper.new(@model,@batch)
         insert_header_sql = columns_helper.map{|column,path|sql_column_name(column,path)}.join(",")
         
         values_sql = @values.map do |row|
@@ -28,12 +28,17 @@ module Rapids
               end
             end
           
-            specific_object = path.inject(row) do |memo,association|
-              if memo.respond_to?(association)
-                memo.send(association)
-              elsif memo.is_a?(Hash) && memo[association.to_s]
-                memo[association.to_s]
-              elsif association.is_a?(String)
+            specific_object = path.inject(row) do |memo,hash_or_association_name|
+              association_name = if hash_or_association_name.is_a?(Hash)
+                hash_or_association_name[:name]
+              else
+                hash_or_association_name
+              end
+              if memo.respond_to?(association_name)
+                memo.send(association_name)
+              elsif memo.is_a?(Hash) && memo[association_name.to_s]
+                memo[association_name.to_s]
+              elsif association_name.is_a?(String)
                 memo
               end
             end
