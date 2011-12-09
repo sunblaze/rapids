@@ -65,7 +65,7 @@ module Rapids
               default_on_nil(val,destination_column)
             end
           end
-          "(#{row_sql.join(",")})"
+          "(#{row_sql.join(",")})".encode("utf-8", :undef => :replace, :replace => "")
         end.join(",")
         
         "INSERT INTO `#{batch_table_name}` (#{insert_header_sql}) VALUES #{values_sql}"
